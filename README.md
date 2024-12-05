@@ -4,7 +4,7 @@ At this point in time this is nothing more than a project quickly slapped togeth
 
 ## Purpose  
   
-It provides a standardized way to use the trezor as a hardware store of keys to make use of cryptographic schemes which the trezore cannot.  
+It provides a standardized way to use the trezor as a hardware store of keys to make use of cryptographic schemes which the trezor cannot. These keys are generated in a deterministic way from the trezor, used in the operation and then overwritten immediately. This doesn't keep the key as secure as it would be remaining on the trezor device, but perhaps more secure than saved somewhere on the system - and almost certainly easier to recover.
   
 ## Limitations  
   
