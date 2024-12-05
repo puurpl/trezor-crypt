@@ -1,6 +1,6 @@
 # Trezor-Crypt  
   
-At this point in thime this is nothing more than a project quickly slapped together with the help of AI. But it seems to work, and I will be further testing and developing it over time.  
+At this point in time this is nothing more than a project quickly slapped together with the help of AI. But it seems to work, and I will be further testing and developing it over time.  
 
 ## Purpose  
   
