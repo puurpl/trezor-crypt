@@ -101,21 +101,3 @@ def decrypt_file(input_path, output_path, trezor_path):
             raise
         finally:
             secure_erase(key)
-
-def main():
-    parser = argparse.ArgumentParser(description="Encrypt or decrypt files using a Trezor device.")
-    parser.add_argument("operation", choices=["encrypt", "decrypt"], help="Operation to perform: encrypt or decrypt")
-    parser.add_argument("input", help="Path to the input file")
-    parser.add_argument("output", help="Path to the output file")
-    parser.add_argument("--trezor-path", default="m/44'/0'/0'/0/0", help="Trezor path to use for key derivation")
-    parser.add_argument("--encryption", default="AES-GCM", help="Encryption scheme (default: AES-GCM)")
-
-    args = parser.parse_args()
-
-    if args.operation == "encrypt":
-        encrypt_file(args.input, args.output, args.trezor_path)
-    elif args.operation == "decrypt":
-        decrypt_file(args.input, args.output, args.trezor_path)
-
-if __name__ == "__main__":
-    main()
