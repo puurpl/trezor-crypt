@@ -62,7 +62,7 @@ def main():
 	        decrypted_data = decrypt(client, header['path'], key, data, iv=args.iv)
 	        write_file(output_path, decrypted_data)
 		else
-			extended_encrypt_file(args.input, args.output, args.trezor_path)
+			extended_encrypt_file(args.input, args.output, args.trezor_path, args.encryption)
     else:
         key = args.key if args.key else f"Encrypt/Decrypt: {os.path.basename(file_path)}"
 		if args.encryption == "Onboard" || args.encryption == "": 
@@ -71,12 +71,13 @@ def main():
 	        header = {
 	            'path': args.path,
 	            'key': key,
+				'encryption': args.encryption,
 	        }
 	        with open(output_path, "wb") as f:
 	            f.write(json.dumps(header).encode() + b"\n")
 	            f.write(encrypted_data)
 		else
-			extended_decrypt_file(args.input, args.output, args.trezor_path)
+			extended_decrypt_file(args.input, args.output, args.trezor_path, args.encryption)
 
     client.close()
 
