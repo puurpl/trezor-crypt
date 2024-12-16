@@ -6,6 +6,8 @@ from trezorlib.misc import encrypt_keyvalue, decrypt_keyvalue
 from trezorlib.tools import parse_path
 from trezorlib.transport import get_transport
 from trezorlib.ui import ClickUI
+from ./extended import encrypt_file as extended_encrypt_file
+from ./extended import encrypt_file as extended_decrypt_file
 
 DEFAULT_PATH = "m/10011'/0'"
 
@@ -42,6 +44,7 @@ def main():
     parser.add_argument("--path", help="BIP-32 path", default=DEFAULT_PATH)
     parser.add_argument("--iv", help="Initialization vector", default=b"")
     parser.add_argument("--output", help="Output file location", default=None)
+	parser.add_argument("--encryption", default="Onboard", help="Encryption scheme (default: Onboard)")
     args = parser.parse_args()
 
     transport = get_transport()
@@ -51,23 +54,29 @@ def main():
     output_path = args.output if args.output else file_path + ".enc" if not file_path.endswith(".enc") else file_path.replace(".enc", "")
 
     if file_path.endswith(".enc"):
-        with open(file_path, "rb") as f:
-            header = json.loads(f.readline().decode())
-            data = f.read()
-        key = header['key']
-        decrypted_data = decrypt(client, header['path'], key, data, iv=args.iv)
-        write_file(output_path, decrypted_data)
+		if args.encryption == "Onboard" || args.encryption == "": 
+	        with open(file_path, "rb") as f:
+	            header = json.loads(f.readline().decode())
+	            data = f.read()
+	        key = header['key']
+	        decrypted_data = decrypt(client, header['path'], key, data, iv=args.iv)
+	        write_file(output_path, decrypted_data)
+		else
+			extended_encrypt_file(args.input, args.output, args.trezor_path)
     else:
         key = args.key if args.key else f"Encrypt/Decrypt: {os.path.basename(file_path)}"
-        data = read_file(file_path)
-        encrypted_data = encrypt(client, args.path, key, data, iv=args.iv)
-        header = {
-            'path': args.path,
-            'key': key,
-        }
-        with open(output_path, "wb") as f:
-            f.write(json.dumps(header).encode() + b"\n")
-            f.write(encrypted_data)
+		if args.encryption == "Onboard" || args.encryption == "": 
+	        data = read_file(file_path)
+	        encrypted_data = encrypt(client, args.path, key, data, iv=args.iv)
+	        header = {
+	            'path': args.path,
+	            'key': key,
+	        }
+	        with open(output_path, "wb") as f:
+	            f.write(json.dumps(header).encode() + b"\n")
+	            f.write(encrypted_data)
+		else
+			extended_decrypt_file(args.input, args.output, args.trezor_path)
 
     client.close()
 
