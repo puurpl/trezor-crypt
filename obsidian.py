@@ -38,16 +38,24 @@ def unpad(data):
     return data[:-padding_size]
 
 def encrypt(client, path, key, value):
-    logging.debug(f"Encrypting with key: {key} and path: {path}")
-    address_n = parse_path(path)
-    padded_value = pad(value)
-    return encrypt_keyvalue(client, address_n, key, padded_value, ask_on_encrypt=False, ask_on_decrypt=False)
+    try:
+        logging.debug(f"Encrypting with key: {key} and path: {path}")
+        address_n = parse_path(path)
+        padded_value = pad(value)
+        return encrypt_keyvalue(client, address_n, key, padded_value, ask_on_encrypt=False, ask_on_decrypt=False)
+    except Exception as e:
+        logging.error(f"Encryption failed for key: {key} with error: {e}")
+        raise
 
 def decrypt(client, path, key, value):
-    logging.debug(f"Decrypting with key: {key} and path: {path}")
-    address_n = parse_path(path)
-    decrypted_value = decrypt_keyvalue(client, address_n, key, value, ask_on_encrypt=False, ask_on_decrypt=False)
-    return unpad(decrypted_value)
+    try:
+        logging.debug(f"Decrypting with key: {key} and path: {path}")
+        address_n = parse_path(path)
+        decrypted_value = decrypt_keyvalue(client, address_n, key, value, ask_on_encrypt=False, ask_on_decrypt=False)
+        return unpad(decrypted_value)
+    except Exception as e:
+        logging.error(f"Decryption failed for key: {key} with error: {e}")
+        raise
 
 def compute_hash(data):
     file_hash = hashlib.sha256(data).hexdigest()
@@ -62,19 +70,21 @@ def process_file(client, file_path, base_dir, action, path):
         data = read_file(file_path)
         file_hash = compute_hash(data)
         encrypted_data = encrypt(client, path, key, data)
-        header = f"{file_hash}\n".encode()  # Add hash to header
-        write_file(file_path + ".enc", header + encrypted_data)
-        delete_file(file_path)  # Remove the original file after encryption
+        if encrypted_data:
+            header = f"{file_hash}\n".encode()  # Add hash to header
+            write_file(file_path + ".enc", header + encrypted_data)
+            delete_file(file_path)  # Remove the original file after encryption
     elif action == "decrypt":
         data = read_file(file_path)
         header, encrypted_data = data.split(b'\n', 1)
         file_hash = header.decode()
         decrypted_data = decrypt(client, path, key, encrypted_data)
-        if compute_hash(decrypted_data) != file_hash:
-            logging.error(f"Hash mismatch for {file_path}, decryption aborted.")
-            return
-        write_file(file_path.replace(".enc", ""), decrypted_data)
-        delete_file(file_path)  # Remove the encrypted file after successful decryption
+        if decrypted_data:
+            if compute_hash(decrypted_data) != file_hash:
+                logging.error(f"Hash mismatch for {file_path}, decryption aborted.")
+                raise ValueError(f"Hash mismatch for {file_path}")
+            write_file(file_path.replace(".enc", ""), decrypted_data)
+            delete_file(file_path)  # Remove the encrypted file after successful decryption
 
 def process_directory(client, directory, action, path):
     logging.debug(f"Processing directory: {directory} with action: {action}")
@@ -82,7 +92,6 @@ def process_directory(client, directory, action, path):
         # Skip the .git directory
         if '.git' in dirs:
             dirs.remove('.git')
-            files.remove('README.md')
         for file in files:
             file_path = os.path.join(root, file)
             if (action == "encrypt" and not file_path.endswith(".enc")) or \
@@ -101,9 +110,12 @@ def main():
     transport = get_transport()
     client = TrezorClient(transport, ui=ClickUI())
 
-    process_directory(client, args.directory, args.action, args.path)
-
-    client.close()
+    try:
+        process_directory(client, args.directory, args.action, args.path)
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+    finally:
+        client.close()
 
 if __name__ == "__main__":
     main()
