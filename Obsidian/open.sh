@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-source /home/user/Documents/encryption/venv/bin/activate
-cd /home/user/Documents/Obsidian
-python /home/user/Documents/encryption/encryption.py --action decrypt /home/user/Documents/Obsidian
+source /path/to/venv/venv/bin/activate
+cd /path/to/Obsidian/dir
+python /path/to/tc-obsidian.py --action decrypt /path/to/Obsidian/dir
 echo "Obsidian archive opened successfully"
