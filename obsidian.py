@@ -78,7 +78,11 @@ def process_file(client, file_path, base_dir, action, path):
 
 def process_directory(client, directory, action, path):
     logging.debug(f"Processing directory: {directory} with action: {action}")
-    for root, _, files in os.walk(directory):
+    for root, dirs, files in os.walk(directory):
+        # Skip the .git directory
+        if '.git' in dirs:
+            dirs.remove('.git')
+            files.remove('README.md')
         for file in files:
             file_path = os.path.join(root, file)
             if (action == "encrypt" and not file_path.endswith(".enc")) or \
