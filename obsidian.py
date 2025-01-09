@@ -92,6 +92,7 @@ def process_directory(client, directory, action, path):
         # Skip the .git directory
         if '.git' in dirs:
             dirs.remove('.git')
+			files.remove('README.md')
         for file in files:
             file_path = os.path.join(root, file)
             if (action == "encrypt" and not file_path.endswith(".enc")) or \
