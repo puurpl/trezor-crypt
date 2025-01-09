@@ -27,11 +27,11 @@ def unpad(data):
 def encrypt(client, path, key, value):
     address_n = parse_path(path)
     padded_value = pad(value)
-    return encrypt_keyvalue(client, address_n, key, padded_value)
+    return encrypt_keyvalue(client, address_n, key, padded_value, ask_on_encrypt=False, ask_on_decrypt=False)
 
 def decrypt(client, path, key, value):
     address_n = parse_path(path)
-    decrypted_value = decrypt_keyvalue(client, address_n, key, value)
+    decrypted_value = decrypt_keyvalue(client, address_n, key, value, ask_on_encrypt=False, ask_on_decrypt=False)
     return unpad(decrypted_value)
 
 def process_file(client, file_path, base_dir, action, path):
@@ -43,7 +43,7 @@ def process_file(client, file_path, base_dir, action, path):
         write_file(file_path + ".enc", encrypted_data)
     elif action == "decrypt":
         data = read_file(file_path)
-        decrypted_data = decrypt(client, path, key, data)
+        decrypted_data = decrypt(client, path, key[:-4], data)
         write_file(file_path.replace(".enc", ""), decrypted_data)
 
 def process_directory(client, directory, action, path):
