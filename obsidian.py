@@ -1,13 +1,10 @@
 import argparse
 import os
-import json
 from trezorlib.client import TrezorClient
 from trezorlib.misc import encrypt_keyvalue, decrypt_keyvalue
 from trezorlib.tools import parse_path
 from trezorlib.transport import get_transport
 from trezorlib.ui import ClickUI
-from .extended import encrypt_file as extended_encrypt_file
-from .extended import decrypt_file as extended_decrypt_file
 
 DEFAULT_PATH = "m/10011'/0'"
 
@@ -27,57 +24,47 @@ def unpad(data):
     padding_size = data[-1]
     return data[:-padding_size]
 
-def encrypt(client, path, key, value, iv):
+def encrypt(client, path, key, value):
     address_n = parse_path(path)
     padded_value = pad(value)
-    return encrypt_keyvalue(client, address_n, key, padded_value, iv=iv)
+    return encrypt_keyvalue(client, address_n, key, padded_value)
 
-def decrypt(client, path, key, value, iv):
+def decrypt(client, path, key, value):
     address_n = parse_path(path)
-    decrypted_value = decrypt_keyvalue(client, address_n, key, value, iv=iv)
+    decrypted_value = decrypt_keyvalue(client, address_n, key, value)
     return unpad(decrypted_value)
 
+def process_file(client, file_path, base_dir, action, path):
+    relative_path = os.path.relpath(file_path, base_dir)
+    key = relative_path
+    if action == "encrypt":
+        data = read_file(file_path)
+        encrypted_data = encrypt(client, path, key, data)
+        write_file(file_path + ".enc", encrypted_data)
+    elif action == "decrypt":
+        data = read_file(file_path)
+        decrypted_data = decrypt(client, path, key, data)
+        write_file(file_path.replace(".enc", ""), decrypted_data)
+
+def process_directory(client, directory, action, path):
+    for root, _, files in os.walk(directory):
+        for file in files:
+            file_path = os.path.join(root, file)
+            if (action == "encrypt" and not file_path.endswith(".enc")) or \
+               (action == "decrypt" and file_path.endswith(".enc")):
+                process_file(client, file_path, directory, action, path)
+
 def main():
-    parser = argparse.ArgumentParser(description="Encrypt or Decrypt files using Trezor.")
-    parser.add_argument("file", help="File to encrypt/decrypt")
-    parser.add_argument("--key", help="Key value for encryption/decryption", default=None)
+    parser = argparse.ArgumentParser(description="Encrypt or Decrypt an entire directory using Trezor.")
+    parser.add_argument("directory", help="Directory to encrypt/decrypt")
     parser.add_argument("--path", help="BIP-32 path", default=DEFAULT_PATH)
-    parser.add_argument("--iv", help="Initialization vector", default=b"")
-    parser.add_argument("--output", help="Output file location", default=None)
-    parser.add_argument("--encryption", default="Onboard", help="Encryption scheme (default: Onboard)")
+    parser.add_argument("--action", choices=["encrypt", "decrypt"], required=True, help="Action to perform: encrypt or decrypt")
     args = parser.parse_args()
 
     transport = get_transport()
     client = TrezorClient(transport, ui=ClickUI())
 
-    file_path = args.file
-    output_path = args.output if args.output else file_path + ".enc" if not file_path.endswith(".enc") else file_path.replace(".enc", "")
-
-    if file_path.endswith(".enc"):
-        if args.encryption == "Onboard" or args.encryption == "":
-            with open(file_path, "rb") as f:
-                header = json.loads(f.readline().decode())
-                data = f.read()
-            key = header['key']
-            decrypted_data = decrypt(client, header['path'], key, data, iv=args.iv)
-            write_file(output_path, decrypted_data)
-        else:
-            extended_decrypt_file(file_path, output_path, args.path, args.encryption)
-    else:
-        key = args.key if args.key else f"Encrypt/Decrypt: {os.path.basename(file_path)}"
-        if args.encryption == "Onboard" or args.encryption == "":
-            data = read_file(file_path)
-            encrypted_data = encrypt(client, args.path, key, data, iv=args.iv)
-            header = {
-                'path': args.path,
-                'key': key,
-                'encryption': args.encryption,
-            }
-            with open(output_path, "wb") as f:
-                f.write(json.dumps(header).encode() + b"\n")
-                f.write(encrypted_data)
-        else:
-            extended_encrypt_file(file_path, output_path, args.path, args.encryption)
+    process_directory(client, args.directory, args.action, args.path)
 
     client.close()
 
