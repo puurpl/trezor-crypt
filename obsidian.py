@@ -23,6 +23,10 @@ def write_file(file_path, data):
     with open(file_path, "wb") as f:
         f.write(data)
 
+def delete_file(file_path):
+    logging.debug(f"Deleting file: {file_path}")
+    os.remove(file_path)
+
 def pad(data):
     padding_size = 16 - (len(data) % 16)
     logging.debug(f"Padding size: {padding_size}")
@@ -60,6 +64,7 @@ def process_file(client, file_path, base_dir, action, path):
         encrypted_data = encrypt(client, path, key, data)
         header = f"{file_hash}\n".encode()  # Add hash to header
         write_file(file_path + ".enc", header + encrypted_data)
+        delete_file(file_path)  # Remove the original file after encryption
     elif action == "decrypt":
         data = read_file(file_path)
         header, encrypted_data = data.split(b'\n', 1)
@@ -69,6 +74,7 @@ def process_file(client, file_path, base_dir, action, path):
             logging.error(f"Hash mismatch for {file_path}, decryption aborted.")
             return
         write_file(file_path.replace(".enc", ""), decrypted_data)
+        delete_file(file_path)  # Remove the encrypted file after successful decryption
 
 def process_directory(client, directory, action, path):
     logging.debug(f"Processing directory: {directory} with action: {action}")
