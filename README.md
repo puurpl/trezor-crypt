@@ -28,9 +28,9 @@ SLIP11 - Is used in this project to encrypt/decrypt on the device a keyvalue pai
 ## Improvements  
   
 Please see issues for the most complete list of pending improvements, but here are a few...  
--- Implement key encapsulation in header if file is greater than 16kb - my test files were all successful below 20kb, and 20 itself was mixed.
+-- Implement key encapsulation in header if file is greater than 16kb - my test files were all successful below 20kb, and 20 itself was mixed.  
 -- GUI  
 -- Wider range of encryption schemes  
 -- Double layer encryption, preferrably allowing the final decryption to happen on the device  
 -- Better error handling, providing appropriate error messages when the key is not the correct key etc  
--- Ability to us post-quantum asymmetrical encrytption  
+-- Ability to use post-quantum asymmetrical encrytption  
