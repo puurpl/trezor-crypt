@@ -19,3 +19,7 @@ Encryption happens onboard the Trezor device.
 - Handling for extra secure files requiring individual confirmation
 - Pass files through encryption in chunks, allowing larger file sizes
 - Encrypting the header and filename for each file (in a single opening/closing operation for the entire dir)- possibly abstracting the entire filestructure during encryption. 
+
+## Notes
+
+- 16KB chunks were too much and caused locking up intermittently, 12KKB chunks seem ok
