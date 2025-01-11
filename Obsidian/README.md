@@ -4,7 +4,7 @@ I made this program to encrypt my Obsidian repo for private storage, potentially
 
 The aim is to use my Trezor device to easily handle secure operations so that I can maintain a backup up yet secure copy of my Obsidian files, even if my local machines and storage are lost.  
 This functionality skips the user confirming each encryption operation and instead simply asks for a password at the beginning (to derive the keys).  
-Encryption happens onboard the Trezor device. And obviously a huge advantage of this is that the encyption is not the same for multiple operations, depending on the file path to derive the key for individual files and setting IVs to make it difficult to see which files have been changed from one commit to the next.  
+Encryption happens onboard the Trezor device. And obviously a huge advantage of this is that the encyption is not the same for multiple operations, depending on the file path to derive the key for individual files and setting IVs to make it difficult to see which files have been changed from one commit to the next. Everything is derived deterministically and all relevant properties are stored in the header of the encrypted file. This allows the use of very secure and non-repeating keys while still being able to decrypt and recover everything simply by remembering the Seed Phrase and encryption password (which does accept an empty field).  
 
 ## Implemented
 
