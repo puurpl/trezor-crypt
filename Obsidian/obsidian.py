@@ -70,17 +70,17 @@ def process_file(client, file_path, base_dir, action, path):
     key = relative_path[:-4] if action == "decrypt" and relative_path.endswith(".enc") else relative_path
     logging.debug(f"Processing file: {file_path} with relative path: {relative_path} and action: {action}")
     if action == "encrypt":
-        file_hash = hashlib.sha256()
+        file_data = read_file(file_path)
+        file_hash = compute_hash(file_data)
+        header = f"{file_hash}\n".encode()
         encrypted_chunks = []
         is_empty = True
         for chunk in read_file_in_chunks(file_path):
             is_empty = False
-            file_hash.update(chunk)
             encrypted_chunks.append(encrypt_chunk(client, path, key, chunk))
         if is_empty:
             logging.debug(f"Skipping encryption for empty file: {file_path}")
             return
-        header = f"{file_hash.hexdigest()}\n".encode()
         write_file_in_chunks(file_path + ".enc", [header] + encrypted_chunks)
         delete_file(file_path)  # Remove the original file after encryption
     elif action == "decrypt":
@@ -95,6 +95,7 @@ def process_file(client, file_path, base_dir, action, path):
         for chunk in encrypted_chunks:
             decrypted_chunks.append(decrypt_chunk(client, path, key, chunk))
         decrypted_data = b''.join(decrypted_chunks)
+        logging.debug(f"File Hash: {file_hash}\nDecrypted Data Hash: {compute_hash(decrypted_data)}")
         if compute_hash(decrypted_data) != file_hash:
             logging.error(f"Hash mismatch for {file_path}, decryption aborted.")
             raise ValueError(f"Hash mismatch for {file_path}")
